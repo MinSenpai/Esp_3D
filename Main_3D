@@ -1,0 +1,53 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+local function createESP(player)
+    local espBox = Drawing.new("Square")
+    espBox.Visible = false
+    espBox.Color = Color3.new(1, 0, 0)
+    espBox.Thickness = 2
+    espBox.Transparency = 1
+
+    local function update()
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local rootPart = player.Character.HumanoidRootPart
+            local head = player.Character:FindFirstChild("Head")
+
+            if head then
+                local rootPos, rootVis = Camera:WorldToViewportPoint(rootPart.Position)
+                local headPos, headVis = Camera:WorldToViewportPoint(head.Position)
+                local legPos, legVis = Camera:WorldToViewportPoint((rootPart.CFrame * CFrame.new(0, -3, 0)).p)
+
+                if rootVis and headVis and legVis then
+                    espBox.Size = Vector2.new(2000 / rootPos.Z, headPos.Y - legPos.Y)
+                    espBox.Position = Vector2.new(rootPos.X - espBox.Size.X / 2, rootPos.Y - espBox.Size.Y / 2)
+                    espBox.Visible = true
+                else
+                    espBox.Visible = false
+                end
+            else
+                espBox.Visible = false
+            end
+        else
+            espBox.Visible = false
+        end
+    end
+
+    RunService.RenderStepped:Connect(update)
+end
+
+local function onPlayerAdded(player)
+    if player ~= LocalPlayer then
+        player.CharacterAdded:Connect(function()
+            createESP(player)
+        end)
+    end
+end
+
+Players.PlayerAdded:Connect(onPlayerAdded)
+
+for _, player in ipairs(Players:GetPlayers()) do
+    onPlayerAdded(player)
+end
